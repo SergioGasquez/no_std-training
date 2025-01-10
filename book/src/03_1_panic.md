@@ -70,15 +70,3 @@ This will include debug information in the ELF file - but that won't get flashed
 If you are reusing this project for other exercises, be sure to remove the line causing the explicit panic.
 
 [panic]: https://doc.rust-lang.org/book/ch09-01-unrecoverable-errors-with-panic.html
-
-## Simulation
-
-This project is available for simulation through two methods:
-- Wokwi projects:
-  - Exercise: Currently not available
-  - [Solution](https://wokwi.com/projects/382726300037178369?build-cache=disable)
-- Wokwi files are also present in the project folder to simulate it with Wokwi VS Code extension:
-   1. Press F1, select `Wokwi: Select Config File` and choose `intro/panic/wokwi.toml`
-      - Edit the `wokwi.toml` file to select between exercise and solution simulation
-   2. Build you project
-   3. Press F1 again and select `Wokwi: Start Simulator`
