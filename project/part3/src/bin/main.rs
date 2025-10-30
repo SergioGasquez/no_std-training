@@ -1,17 +1,14 @@
 #![no_std]
 #![no_main]
 
-use core::net::Ipv4Addr;
-use core::str::FromStr;
-use core::time::Duration;
+use core::{net::Ipv4Addr, str::FromStr, time::Duration};
 
 use edge_captive::io::run;
 use embassy_executor::Spawner;
 use embassy_net::{
     IpListenEndpoint, Ipv4Cidr, Runner, Stack, StackResources, StaticConfigV4, tcp::TcpSocket,
 };
-use embassy_sync::channel::Channel;
-use embassy_sync::signal::Signal;
+use embassy_sync::{channel::Channel, signal::Signal};
 use embassy_time::{Duration as EmbassyDuration, Timer};
 use esp_alloc as _;
 use esp_backtrace as _;
