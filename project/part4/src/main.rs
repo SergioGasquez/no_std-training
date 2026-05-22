@@ -36,10 +36,7 @@ use esp_hal::{
     rng::Rng,
     timer::timg::TimerGroup,
 };
-use esp_radio::{
-    Controller,
-    wifi::{ClientConfig, ModeConfig, WifiController, WifiDevice, WifiEvent, WifiStaState},
-};
+use esp_radio::wifi::{self, Config as WifiConfig, Interface as WifiInterface, WifiController, sta::StationConfig};
 use heapless::String;
 use log::{debug, error, info};
 use rust_mqtt::{
@@ -47,10 +44,7 @@ use rust_mqtt::{
     packet::v5::reason_codes::ReasonCode,
     utils::rng_generator::CountingRng,
 };
-use shtcx::{
-    self,
-    asynchronous::{PowerMode, max_measurement_duration, shtc3},
-};
+use shtcx::{PowerMode, max_measurement_duration, shtc3};
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
@@ -80,21 +74,13 @@ async fn main(spawner: Spawner) -> ! {
     let i2c = I2c::new(peripherals.I2C0, Config::default())
         .expect("Failed to create I2C bus")
         .with_sda(sda)
-        .with_scl(scl)
-        .into_async();
+        .with_scl(scl);
     let mut sht = shtc3(i2c);
 
-    static ESP_RADIO_CTRL_CELL: static_cell::StaticCell<Controller<'static>> =
-        static_cell::StaticCell::new();
-    let esp_radio_ctrl = &*ESP_RADIO_CTRL_CELL
-        .uninit()
-        .write(esp_radio::init().expect("Failed to initialize radio controller"));
-
     let (controller, interfaces) =
-        esp_radio::wifi::new(esp_radio_ctrl, peripherals.WIFI, Default::default())
-            .expect("Failed to create WiFi controller");
+        wifi::new(peripherals.WIFI, Default::default()).expect("Failed to create WiFi controller");
 
-    let wifi_interface = interfaces.sta;
+    let wifi_interface = interfaces.station;
 
     let config = embassy_net::Config::dhcpv4(Default::default());
 
@@ -112,8 +98,8 @@ async fn main(spawner: Spawner) -> ! {
             .write(StackResources::<3>::new()),
         seed,
     );
-    spawner.spawn(connection(controller)).ok();
-    spawner.spawn(net_task(runner)).ok();
+    spawner.spawn(connection(controller).unwrap());
+    spawner.spawn(net_task(runner).unwrap());
 
     let mut rx_buffer = [0; 4096];
     let mut tx_buffer = [0; 4096];
@@ -231,15 +217,14 @@ async fn main(spawner: Spawner) -> ! {
             }
 
             // Read sensor
-            if let Err(e) = sht.start_measurement(PowerMode::NormalMode).await {
+            if let Err(e) = sht.start_measurement(PowerMode::NormalMode) {
                 error!("Failed to start measurement: {:?}", e);
                 Timer::after(Duration::from_secs(1)).await;
                 continue;
             }
-            // Wait for 12.1 ms https://github.com/Fristi/shtcx-rs/blob/feature/async-support/src/asynchronous.rs#L413-L424
             let duration = max_measurement_duration(&sht, PowerMode::NormalMode);
             Timer::after(Duration::from_micros(duration.into())).await;
-            let measurement = match sht.get_measurement_result().await {
+            let measurement = match sht.get_measurement_result() {
                 Ok(m) => m,
                 Err(e) => {
                     error!("Failed to get measurement result: {:?}", e);
@@ -302,42 +287,34 @@ async fn main(spawner: Spawner) -> ! {
 #[embassy_executor::task]
 async fn connection(mut controller: WifiController<'static>) {
     debug!("start connection task");
-    debug!("Device capabilities: {:?}", controller.capabilities());
+
+    let client_config = WifiConfig::Station(
+        StationConfig::default()
+            .with_ssid(SSID)
+            .with_password(PASSWORD.into()),
+    );
+    controller
+        .set_config(&client_config)
+        .expect("Failed to set WiFi configuration");
+
     loop {
-        if esp_radio::wifi::sta_state() == WifiStaState::Connected {
-            // wait until we're no longer connected
-            controller.wait_for_event(WifiEvent::StaDisconnected).await;
-            Timer::after(Duration::from_millis(5000)).await;
-        }
-        if !matches!(controller.is_started(), Ok(true)) {
-            let client_config = ModeConfig::Client(
-                ClientConfig::default()
-                    .with_ssid(SSID.into())
-                    .with_password(PASSWORD.into()),
-            );
-            controller
-                .set_config(&client_config)
-                .expect("Failed to set WiFi configuration");
-            debug!("Starting wifi");
-            controller
-                .start_async()
-                .await
-                .expect("Failed to start WiFi");
-            debug!("Wifi started!");
-        }
         debug!("About to connect...");
 
         match controller.connect_async().await {
-            Ok(_) => info!("Wifi connected!"),
+            Ok(_) => {
+                info!("Wifi connected!");
+                let _ = controller.wait_for_disconnect_async().await;
+                Timer::after(Duration::from_secs(1)).await;
+            }
             Err(e) => {
                 error!("Failed to connect to wifi: {e:?}");
-                Timer::after(Duration::from_millis(5000)).await
+                Timer::after(Duration::from_secs(5)).await;
             }
         }
     }
 }
 
 #[embassy_executor::task]
-async fn net_task(mut runner: Runner<'static, WifiDevice<'static>>) {
+async fn net_task(mut runner: Runner<'static, WifiInterface<'static>>) {
     runner.run().await
 }

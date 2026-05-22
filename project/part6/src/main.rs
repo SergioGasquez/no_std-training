@@ -50,7 +50,7 @@ use esp_hal::{
     ram,
     timer::timg::TimerGroup,
 };
-use esp_radio::Controller;
+use esp_radio::wifi;
 use log::{debug, info};
 
 use crate::button::{BUTTON_PRESSED, button_monitor};
@@ -60,7 +60,7 @@ use crate::network::{
     NetworkStacks, WifiCredentials, connection, create_network_stacks, net_task, sta_net_task,
 };
 use crate::ota::{FLASH_STORAGE, http_client_task};
-use shtcx::asynchronous::shtc3;
+use shtcx::shtc3;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
@@ -92,8 +92,7 @@ async fn main(spawner: Spawner) -> ! {
     let i2c = I2c::new(peripherals.I2C0, Config::default())
         .expect("Failed to create I2C bus")
         .with_sda(sda)
-        .with_scl(scl)
-        .into_async();
+        .with_scl(scl);
     let sht = shtc3(i2c);
 
     // Set up button on GPIO9 (BOOT button on ESP32-C3)
@@ -102,18 +101,11 @@ async fn main(spawner: Spawner) -> ! {
     let button = Input::new(button_pin, config);
 
     // Initialize WiFi radio
-    static ESP_RADIO_CTRL_CELL: static_cell::StaticCell<Controller<'static>> =
-        static_cell::StaticCell::new();
-    let esp_radio_ctrl = &*ESP_RADIO_CTRL_CELL
-        .uninit()
-        .write(esp_radio::init().expect("Failed to initialize radio controller"));
-
     let (controller, interfaces) =
-        esp_radio::wifi::new(esp_radio_ctrl, peripherals.WIFI, Default::default())
-            .expect("Failed to create WiFi controller");
+        wifi::new(peripherals.WIFI, Default::default()).expect("Failed to create WiFi controller");
 
-    let ap_device = interfaces.ap;
-    let sta_device = interfaces.sta;
+    let ap_device = interfaces.access_point;
+    let sta_device = interfaces.station;
 
     // Setup network stacks
     let gw_ip_addr_str = GW_IP_ADDR_ENV.unwrap_or("192.168.2.1");
@@ -134,17 +126,15 @@ async fn main(spawner: Spawner) -> ! {
 
     // Spawn all tasks
     spawner
-        .spawn(connection(controller, wifi_credentials_channel))
-        .ok();
-    spawner.spawn(net_task(ap_runner)).ok();
-    spawner.spawn(sta_net_task(sta_runner)).ok();
-    spawner.spawn(run_dhcp(ap_stack, gw_ip_addr)).ok();
-    spawner.spawn(run_captive_portal(ap_stack, gw_ip_addr)).ok();
-    spawner.spawn(mqtt_task(sta_stack, sht)).ok();
-    spawner.spawn(button_monitor(button, &BUTTON_PRESSED)).ok();
+        .spawn(connection(controller, wifi_credentials_channel).unwrap());
+    spawner.spawn(net_task(ap_runner).unwrap());
+    spawner.spawn(sta_net_task(sta_runner).unwrap());
+    spawner.spawn(run_dhcp(ap_stack, gw_ip_addr).unwrap());
+    spawner.spawn(run_captive_portal(ap_stack, gw_ip_addr).unwrap());
+    spawner.spawn(mqtt_task(sta_stack, sht).unwrap());
+    spawner.spawn(button_monitor(button, &BUTTON_PRESSED).unwrap());
     spawner
-        .spawn(http_client_task(sta_stack, &BUTTON_PRESSED))
-        .ok();
+        .spawn(http_client_task(sta_stack, &BUTTON_PRESSED).unwrap());
 
     // Wait for AP link to come up
     ap_stack.wait_link_up().await;
@@ -157,8 +147,7 @@ async fn main(spawner: Spawner) -> ! {
         .inspect(|c| debug!("ipv4 config: {c:?}"));
 
     spawner
-        .spawn(run_http_server(ap_stack, wifi_credentials_channel))
-        .ok();
+        .spawn(run_http_server(ap_stack, wifi_credentials_channel).unwrap());
 
     // Keep main task alive
     loop {

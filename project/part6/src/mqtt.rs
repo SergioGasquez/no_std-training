@@ -9,13 +9,13 @@ use rust_mqtt::{
 
 use crate::sensor::read_sensor;
 use esp_hal::i2c::master::I2c;
-use shtcx::asynchronous::ShtC3;
+use shtcx::ShtC3;
 
 const BROKER_HOST: Option<&'static str> = option_env!("BROKER_HOST");
 const BROKER_PORT: Option<&'static str> = option_env!("BROKER_PORT");
 
 #[embassy_executor::task]
-pub async fn mqtt_task(stack: Stack<'static>, mut sht: ShtC3<I2c<'static, esp_hal::Async>>) {
+pub async fn mqtt_task(stack: Stack<'static>, mut sht: ShtC3<I2c<'static, esp_hal::Blocking>>) {
     let mut rx_buffer = [0; 4096];
     let mut tx_buffer = [0; 4096];
 

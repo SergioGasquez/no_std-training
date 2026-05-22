@@ -36,9 +36,9 @@ use esp_hal::{
     clock::CpuClock, interrupt::software::SoftwareInterruptControl, ram, rng::Rng,
     timer::timg::TimerGroup,
 };
-use esp_radio::{
-    Controller,
-    wifi::{AccessPointConfig, ClientConfig, ModeConfig, WifiController, WifiDevice, WifiEvent},
+use esp_radio::wifi::{
+    self, Config as WifiConfig, Interface as WifiInterface, WifiController, ap::AccessPointConfig,
+    sta::StationConfig,
 };
 use log::{debug, error, info};
 
@@ -74,20 +74,13 @@ async fn main(spawner: Spawner) -> ! {
     let sw_int = SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
     esp_rtos::start(timg0.timer0, sw_int.software_interrupt0);
 
-    static ESP_RADIO_CTRL_CELL: static_cell::StaticCell<Controller<'static>> =
-        static_cell::StaticCell::new();
-    let esp_radio_ctrl = &*ESP_RADIO_CTRL_CELL
-        .uninit()
-        .write(esp_radio::init().expect("Failed to initialize radio controller"));
-
     let (controller, interfaces) =
-        esp_radio::wifi::new(esp_radio_ctrl, peripherals.WIFI, Default::default())
-            .expect("Failed to create WiFi controller");
+        wifi::new(peripherals.WIFI, Default::default()).expect("Failed to create WiFi controller");
 
     // Start with AP device for provisioning
-    let ap_device = interfaces.ap;
+    let ap_device = interfaces.access_point;
     // Store STA device for later use
-    let sta_device = interfaces.sta;
+    let sta_device = interfaces.station;
 
     let gw_ip_addr_str = GW_IP_ADDR_ENV.unwrap_or("192.168.2.1");
     let gw_ip_addr = Ipv4Addr::from_str(gw_ip_addr_str).expect("failed to parse gateway ip");
@@ -135,14 +128,13 @@ async fn main(spawner: Spawner) -> ! {
     let wifi_credentials_channel = WIFI_CREDENTIALS_CHANNEL_CELL.uninit().write(Channel::new());
 
     spawner
-        .spawn(connection(controller, wifi_credentials_channel))
-        .ok();
-    spawner.spawn(net_task(ap_runner)).ok();
-    spawner.spawn(sta_net_task(sta_runner)).ok();
+        .spawn(connection(controller, wifi_credentials_channel).unwrap());
+    spawner.spawn(net_task(ap_runner).unwrap());
+    spawner.spawn(sta_net_task(sta_runner).unwrap());
     // Stack is Copy, so we can pass it by value to each task
-    spawner.spawn(run_dhcp(ap_stack, gw_ip_addr)).ok();
-    spawner.spawn(run_captive_portal(ap_stack, gw_ip_addr)).ok();
-    spawner.spawn(http_client_task(sta_stack)).ok();
+    spawner.spawn(run_dhcp(ap_stack, gw_ip_addr).unwrap());
+    spawner.spawn(run_captive_portal(ap_stack, gw_ip_addr).unwrap());
+    spawner.spawn(http_client_task(sta_stack).unwrap());
 
     ap_stack.wait_link_up().await;
     info!("WiFi Provisioning Portal Ready");
@@ -154,8 +146,7 @@ async fn main(spawner: Spawner) -> ! {
         .inspect(|c| debug!("ipv4 config: {c:?}"));
 
     spawner
-        .spawn(run_http_server(ap_stack, wifi_credentials_channel))
-        .ok();
+        .spawn(run_http_server(ap_stack, wifi_credentials_channel).unwrap());
 
     // Keep main task alive
     loop {
@@ -402,64 +393,38 @@ async fn connection(
     >,
 ) {
     debug!("start connection task");
-    debug!("Device capabilities: {:?}", controller.capabilities());
 
-    // Start in AP mode first for provisioning
-    let ap_config =
-        ModeConfig::AccessPoint(AccessPointConfig::default().with_ssid("esp-radio".into()));
+    let ap_config = WifiConfig::AccessPoint(AccessPointConfig::default().with_ssid("esp-radio"));
     controller
         .set_config(&ap_config)
         .expect("Failed to set AP WiFi configuration");
-    debug!("Starting WiFi in AP mode");
-    controller
-        .start_async()
-        .await
-        .expect("Failed to start WiFi");
     debug!("WiFi AP started!");
 
-    // Wait for credentials
     debug!("Waiting for WiFi credentials...");
     let credentials = wifi_credentials_channel.receiver().receive().await;
     info!("Credentials received! SSID: {}", credentials.ssid);
 
-    // Give the HTTP handler time to send the saved page before dropping AP
     debug!("Delaying AP shutdown to allow HTTP response to complete...");
     Timer::after(EmbassyDuration::from_secs(2)).await;
 
-    // Stop the AP
-    debug!("Stopping AP mode...");
-    controller.stop_async().await.expect("Failed to stop WiFi");
-    debug!("AP stopped");
-
     Timer::after(EmbassyDuration::from_secs(1)).await;
 
-    // Configure and start station mode
     debug!("Configuring station mode...");
-    let client_config = ClientConfig::default()
-        .with_ssid(credentials.ssid.as_str().into())
-        .with_password(credentials.password.as_str().into());
-
-    let sta_config = ModeConfig::Client(client_config);
+    let sta_config = WifiConfig::Station(
+        StationConfig::default()
+            .with_ssid(credentials.ssid.as_str())
+            .with_password(credentials.password.as_str().into()),
+    );
     controller
         .set_config(&sta_config)
         .expect("Failed to set station mode WiFi configuration");
 
-    debug!("Starting WiFi in station mode...");
-    controller
-        .start_async()
-        .await
-        .expect("Failed to start WiFi");
-    debug!("WiFi station started!");
-
-    // Connect to the network
     debug!("Connecting to WiFi network...");
     loop {
         match controller.connect_async().await {
-            Ok(()) => {
+            Ok(_) => {
                 debug!("Successfully connected to WiFi!");
-
-                // Wait for disconnect event
-                controller.wait_for_event(WifiEvent::StaDisconnected).await;
+                let _ = controller.wait_for_disconnect_async().await;
                 debug!("Disconnected from WiFi, will attempt to reconnect...");
             }
             Err(e) => {
@@ -472,12 +437,12 @@ async fn connection(
 }
 
 #[embassy_executor::task]
-async fn net_task(mut runner: Runner<'static, WifiDevice<'static>>) {
+async fn net_task(mut runner: Runner<'static, WifiInterface<'static>>) {
     runner.run().await
 }
 
 #[embassy_executor::task]
-async fn sta_net_task(mut runner: Runner<'static, WifiDevice<'static>>) {
+async fn sta_net_task(mut runner: Runner<'static, WifiInterface<'static>>) {
     runner.run().await
 }
 

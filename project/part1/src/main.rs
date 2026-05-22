@@ -19,10 +19,7 @@ use esp_hal::{
     timer::timg::TimerGroup,
 };
 use log::{error, info};
-use shtcx::{
-    self,
-    asynchronous::{PowerMode, max_measurement_duration, shtc3},
-};
+use shtcx::{PowerMode, max_measurement_duration, shtc3};
 
 // This creates a default app-descriptor required by the esp-idf bootloader.
 // For more information see: <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/app_image_format.html#application-description>
@@ -43,23 +40,21 @@ async fn main(spawner: Spawner) -> ! {
     let i2c = I2c::new(peripherals.I2C0, Config::default())
         .expect("Failed to create I2C bus")
         .with_sda(sda)
-        .with_scl(scl)
-        .into_async();
+        .with_scl(scl);
     let mut sht = shtc3(i2c);
 
     let _ = spawner;
 
     loop {
         // Read sensor
-        if let Err(e) = sht.start_measurement(PowerMode::NormalMode).await {
+        if let Err(e) = sht.start_measurement(PowerMode::NormalMode) {
             error!("Failed to start measurement: {:?}", e);
             Timer::after(Duration::from_secs(1)).await;
             continue;
         }
-        // Wait for 12.1 ms https://github.com/Fristi/shtcx-rs/blob/feature/async-support/src/asynchronous.rs#L413-L424
         let duration = max_measurement_duration(&sht, PowerMode::NormalMode);
         Timer::after(Duration::from_micros(duration.into())).await;
-        let measurement = match sht.get_measurement_result().await {
+        let measurement = match sht.get_measurement_result() {
             Ok(m) => m,
             Err(e) => {
                 error!("Failed to get measurement result: {:?}", e);
