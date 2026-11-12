@@ -145,6 +145,12 @@ The two functions are identical. They exist separately because a function marked
 
 A phone that joins `esp-radio` expects the same services a normal router provides. The provisioning tasks provide the minimum set, using crates from the [`edge-net`][edge-net] family that run on top of `embassy-net` through [`edge-nal-embassy`][edge-nal-embassy].
 
+These crates are new dependencies in `Cargo.toml`:
+
+```toml
+{{#include ../../project/part4/Cargo.toml:edge_net}}
+```
+
 `run_dhcp` uses [`edge-dhcp`][edge-dhcp] to assign addresses to clients. Without it, the user would have to configure a static IP address by hand before reaching the page:
 
 ```rust,ignore
@@ -327,10 +333,10 @@ At this point the device no longer needs credentials at compile time: the same f
 [embassy-task]: https://docs.rs/embassy-executor/0.10.0/embassy_executor/attr.task.html
 [embassy-channel]: https://docs.rs/embassy-sync/0.8.0/embassy_sync/channel/struct.Channel.html
 [edge-net]: https://github.com/sysgrok/edge-net
-[edge-nal-embassy]: https://docs.rs/edge-nal-embassy/0.8.1/edge_nal_embassy/
-[edge-dhcp]: https://docs.rs/edge-dhcp/0.7.0/edge_dhcp/
-[edge-captive]: https://docs.rs/edge-captive/0.7.0/edge_captive/
-[edge-http]: https://docs.rs/edge-http/0.7.0/edge_http/
+[edge-nal-embassy]: https://docs.rs/edge-nal-embassy/0.9.0/edge_nal_embassy/
+[edge-dhcp]: https://docs.rs/edge-dhcp/0.8.0/edge_dhcp/
+[edge-captive]: https://docs.rs/edge-captive/0.8.0/edge_captive/
+[edge-http]: https://docs.rs/edge-http/0.8.0/edge_http/
 [heapless-string]: https://docs.rs/heapless/0.9.3/heapless/string/type.String.html
 [serde-json-core]: https://docs.rs/serde-json-core/0.6.0/serde_json_core/
 [include-str]: https://doc.rust-lang.org/core/macro.include_str.html

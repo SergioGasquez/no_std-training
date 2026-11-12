@@ -5,14 +5,21 @@ rust-version = "1.88"
 version      = "0.1.0"
 
 [dependencies]
-edge-captive = { version = "0.7.0", default-features = false, features = [
+# ANCHOR: edge_net
+edge-captive = { version = "0.8.0", default-features = false, features = [
   "io",
 ] }
-edge-dhcp = "0.7.0"
-edge-nal = "0.6.0"
-edge-nal-embassy = "0.8.1"
+edge-dhcp = "0.8.0"
+edge-http = { version = "0.8.0", default-features = false, features = [
+  "edge-nal",
+  "embedded-io-async",
+  "io",
+] }
+edge-nal = "0.7.0"
+edge-nal-embassy = "0.9.0"
+# ANCHOR_END: edge_net
 embassy-executor = "0.10.0"
-embassy-net = { version = "0.8.0", features = [
+embassy-net = { version = "0.9.1", features = [
   "dhcpv4",
   "medium-ethernet",
   "tcp",
@@ -34,11 +41,6 @@ esp-radio = { version = "0.18.0", features = ["esp32c3", "unstable", "wifi"] }
 esp-rtos = { version = "0.3.0", features = ["embassy", "esp-radio", "esp32c3"] }
 heapless = { version = "0.9.3", features = ["serde"] }
 log = "0.4.29"
-edge-http = { version = "0.7.0", default-features = false, features = [
-  "edge-nal",
-  "embedded-io-async",
-  "io",
-] }
 rust-mqtt = { version = "0.5.1", default-features = false, features = ["bump", "v5"] }
 serde = { version = "1.0.228", default-features = false, features = ["derive"] }
 serde-json-core = "0.6.0"

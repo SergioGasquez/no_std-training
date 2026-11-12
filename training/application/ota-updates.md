@@ -448,6 +448,6 @@ With OTA updates in place, a device in the field can receive new firmware withou
 [embedded-storage-storage]: https://docs.rs/embedded-storage/0.3.1/embedded_storage/trait.Storage.html
 [embassy-mutex]: https://docs.rs/embassy-sync/0.8.0/embassy_sync/mutex/struct.Mutex.html
 [embassy-signal]: https://docs.rs/embassy-sync/0.8.0/embassy_sync/signal/struct.Signal.html
-[edge-http-client]: https://docs.rs/edge-http/0.7.0/edge_http/io/client/enum.Connection.html
-[edge-nal-embassy]: https://docs.rs/edge-nal-embassy/0.8.1/edge_nal_embassy/
-[with-timeout]: https://docs.rs/edge-nal/0.6.0/edge_nal/struct.WithTimeout.html
+[edge-http-client]: https://docs.rs/edge-http/0.8.0/edge_http/io/client/enum.Connection.html
+[edge-nal-embassy]: https://docs.rs/edge-nal-embassy/0.9.0/edge_nal_embassy/
+[with-timeout]: https://docs.rs/edge-nal/0.7.0/edge_nal/struct.WithTimeout.html
