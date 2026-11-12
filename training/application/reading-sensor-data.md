@@ -167,5 +167,5 @@ At this point the application can initialize the board, configure an async I2C d
 [i2c-with-sda]: https://docs.espressif.com/projects/rust/esp-hal/1.1.1/esp32c3/esp_hal/i2c/master/struct.I2c.html#method.with_sda
 [i2c-with-scl]: https://docs.espressif.com/projects/rust/esp-hal/1.1.1/esp32c3/esp_hal/i2c/master/struct.I2c.html#method.with_scl
 [i2c-into-async]: https://docs.espressif.com/projects/rust/esp-hal/1.1.1/esp32c3/esp_hal/i2c/master/struct.I2c.html#method.into_async
-[`shtcx2`]: https://github.com/SergioGasquez/shtcx2
+[`shtcx2`]: https://docs.rs/shtcx2/0.1.0/shtcx2/
 [shtc3-datasheet]: https://sensirion.com/media/documents/643F9C8E/63A5A436/Datasheet_SHTC3.pdf

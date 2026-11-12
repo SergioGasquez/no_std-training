@@ -9,7 +9,6 @@
         "project/part2/Cargo.toml",
         "project/part3/Cargo.toml",
         "project/part4/Cargo.toml",
-        "project/part5/Cargo.toml",
-        "project/part6/Cargo.toml"
+        "project/part5/Cargo.toml"
     ]
 }

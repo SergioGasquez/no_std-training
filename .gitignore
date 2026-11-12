@@ -2,7 +2,8 @@
 # will have compiled files and executables
 debug/
 target/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .zed/
 .helix/
 

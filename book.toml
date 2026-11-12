@@ -1,5 +1,5 @@
 [book]
-title    = "Embedded Rust Training for ESP32"
+title    = "Embedded Rust Training for ESP32-C3"
 authors  = ["Jesse Braham", "Sergio Gasquez"]
 src      = "training"
 language = "en"
