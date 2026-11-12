@@ -45,7 +45,7 @@ jobs:
         run: cargo install mdbook-shiftinclude --locked
 
       - name: Build the contents of the book
-        run: mdbook build -d ../output/
+        run: mdbook build -d output
 
       - name: Deploy
         if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
