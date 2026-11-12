@@ -5,25 +5,25 @@ on:
     branches:
       - main
     paths:
-      - "training/"
       - "training/**"
+      # Chapters include snippets from the project sources.
+      - "project/**"
+      - "book.toml"
+      - "lychee.toml"
+      - "mermaid-init.js"
+      - "mermaid.min.js"
       - ".github/workflows/book.yml"
-      - "**book**"
   pull_request:
     paths:
-      - "training/"
       - "training/**"
+      # Chapters include snippets from the project sources.
+      - "project/**"
+      - "book.toml"
+      - "lychee.toml"
+      - "mermaid-init.js"
+      - "mermaid.min.js"
       - ".github/workflows/book.yml"
-      - "**book**"
   workflow_dispatch:
-    paths:
-      - "training/"
-      - "training/**"
-      - ".github/workflows/book.yml"
-      - "**book**"
-
-env:
-  MDBOOK_VERSION: "0.5.1"
 
 jobs:
   build:
@@ -35,17 +35,24 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v6
 
-      - uses: jontze/action-mdbook@v3
+      - uses: jontze/action-mdbook@v4
         with:
-          token: ${{secrets.GITHUB_TOKEN}}
-          use-linkcheck: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          mdbook-version: "0.5.4"
           use-mermaid: true
+          mermaid-version: "0.17.1"
 
       - name: Install shiftinclude preprocessor
         run: cargo install mdbook-shiftinclude --locked
 
       - name: Build the contents of the book
         run: mdbook build -d output
+
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --config lychee.toml output
+          fail: true
 
       - name: Deploy
         if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
