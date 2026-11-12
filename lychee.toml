@@ -1,0 +1,22 @@
+# Link checker configuration for the generated book. See .github/workflows/book.yml.
+
+include_fragments = "anchor-only"
+max_retries = 3
+accept = ["200..=299", "429"]
+
+# The device addresses used in the training only exist on the local network.
+exclude_all_private = true
+
+exclude = [
+  # The room alias is a fragment that only the Matrix web client resolves.
+  '^https://matrix\.to/',
+]
+
+exclude_path = [
+  # Font licenses bundled by mdBook.
+  '(^|/)fonts/',
+  # Duplicates every chapter.
+  '(^|/)print\.html$',
+  # Uses root-relative links that only resolve on the deployed site.
+  '(^|/)404\.html$',
+]

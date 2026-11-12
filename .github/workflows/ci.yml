@@ -2,29 +2,45 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
     paths-ignore:
-      - "book/"
-      - "book/**"
-      - "**/README.md"
-      - ".github/workflows/wokwi_projects.yml"
+      - "**/*.md"
+      - "training/**"
+      - "book.toml"
+      - "lychee.toml"
+      - "mermaid-init.js"
+      - "mermaid.min.js"
   pull_request:
     paths-ignore:
-      - "book/"
-      - "book/**"
-      - "**/README.md"
-      - ".github/workflows/wokwi_projects.yml"
+      - "**/*.md"
+      - "training/**"
+      - "book.toml"
+      - "lychee.toml"
+      - "mermaid-init.js"
+      - "mermaid.min.js"
   schedule:
     - cron: "50 7 * * *"
 
 env:
   CARGO_TERM_COLOR: always
-  SSID: Wokwi-GUEST
+  SSID: ""
   PASSWORD: ""
+  BROKER_PORT: ""
+  HOST_IP: ""
 
 jobs:
-  hello-world:
-    name: hello-world
+  projects:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - "project/part1"
+          - "project/part2"
+          - "project/part3"
+          - "project/part4"
+          - "project/part5"
     steps:
       - uses: actions/checkout@v6
 
@@ -32,58 +48,29 @@ jobs:
         with:
           target: riscv32imc-unknown-none-elf
           toolchain: stable
-          components: rust-src
+          components: rust-src, rustfmt, clippy
 
-      - run: cargo build --release
-        working-directory: intro/hello-world
+      - run: cargo fmt --all -- --check
+        working-directory: ${{ matrix.project }}
 
-      - name: Wokwi CI check
-        if: github.actor == 'esp-rs'
-        uses: wokwi/wokwi-ci-action@v1
-        with:
-          token: ${{ secrets.WOKWI_CLI_TOKEN }}
-          path: intro/hello-world
-          timeout: 30000
-          scenario: ${{ github.workspace }}/.github/hello-world.test.yaml
-          fail_text: "Error"
+      - run: cargo build --release --locked
+        working-directory: ${{ matrix.project }}
 
-  examples:
-    name: ${{ matrix.project.name }}
+      - run: cargo clippy --locked -- -D warnings
+        working-directory: ${{ matrix.project }}
+
+  xtask:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - name: "blinky"
-            path: "intro/blinky"
-          - name: "button"
-            path: "intro/button"
-          - name: "button-interrupt"
-            path: "intro/button-interrupt"
-          - name: "panic"
-            path: "intro/panic"
-          - name: "http-client"
-            path: "intro/http-client"
-          - name: "defmt"
-            path: "intro/defmt"
     steps:
       - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@v1
         with:
-          target: riscv32imc-unknown-none-elf
-          toolchain: nightly
-          components: rust-src
+          toolchain: stable
+          components: rustfmt, clippy
 
-      - run: cargo build --release --examples
-        working-directory: ${{ matrix.project.path }}
+      - run: cargo fmt --all -- --check
 
-      - name: Wokwi CI check
-        if: (matrix.project.name != 'defmt') && github.actor == 'esp-rs'
-        uses: wokwi/wokwi-ci-action@v1
-        with:
-          token: ${{ secrets.WOKWI_CLI_TOKEN }}
-          path: ${{ matrix.project.path }}
-          timeout: 30000
-          scenario: ${{ github.workspace }}/.github/${{ matrix.project.name }}.test.yaml
-          fail_text: "Error"
+      - run: cargo clippy --package xtask --all-targets --locked -- -D warnings
+
+      - run: cargo test --package xtask --locked

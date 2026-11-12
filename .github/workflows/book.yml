@@ -1,26 +1,29 @@
 name: Book CI
+
 on:
   push:
+    branches:
+      - main
     paths:
-      - "book/"
-      - "book/**"
+      - "training/**"
+      # Chapters include snippets from the project sources.
+      - "project/**"
+      - "book.toml"
+      - "lychee.toml"
+      - "mermaid-init.js"
+      - "mermaid.min.js"
       - ".github/workflows/book.yml"
-      - "**book**"
   pull_request:
     paths:
-      - "book/"
-      - "book/**"
+      - "training/**"
+      # Chapters include snippets from the project sources.
+      - "project/**"
+      - "book.toml"
+      - "lychee.toml"
+      - "mermaid-init.js"
+      - "mermaid.min.js"
       - ".github/workflows/book.yml"
-      - "**book**"
   workflow_dispatch:
-    paths:
-      - "book/"
-      - "book/**"
-      - ".github/workflows/book.yml"
-      - "**book**"
-
-env:
-  MDBOOK_VERSION: "0.4.28"
 
 jobs:
   build:
@@ -32,23 +35,25 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v6
 
-      - name: Install Python dependencies
-        run: |
-          pip3 install --user python-dateutil linkchecker
-      - name: Put pip binary directory into path
-        run: echo "~/.local/bin" >> $GITHUB_PATH
+      - uses: jontze/action-mdbook@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          mdbook-version: "0.5.4"
+          use-mermaid: true
+          mermaid-version: "0.17.1"
 
-      - name: Download mdBook ${{ env.MDBOOK_VERSION }}
-        run: |
-          mkdir -p /tmp/mdbook
-          curl -Lo- https://github.com/rust-lang/mdBook/releases/download/v${{ env.MDBOOK_VERSION }}/mdbook-v${{ env.MDBOOK_VERSION }}-x86_64-unknown-linux-gnu.tar.gz | tar -C /tmp/mdbook -xzv
+      - name: Install shiftinclude preprocessor
+        run: cargo install mdbook-shiftinclude --locked
 
       - name: Build the contents of the book
-        run: "/tmp/mdbook/mdbook build book/ -d ../output/"
+        run: mdbook build -d output
 
       - name: Check links
-        run: linkchecker book
-      
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --config lychee.toml output
+          fail: true
+
       - name: Deploy
         if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
         uses: appleboy/scp-action@v1.0.0
@@ -60,3 +65,4 @@ jobs:
           source: "output/"
           strip_components: 1 # remove the prefix, it's already being placed in /projects/rust/no_std-training
           overwrite: true
+          rm: true # remove pages that are no longer part of the book

@@ -1,0 +1,36 @@
+[book]
+title    = "Embedded Rust Training for ESP32-C3"
+authors  = ["Jesse Braham", "Sergio Gasquez"]
+src      = "training"
+language = "en"
+
+[rust]
+edition = "2024"
+
+[output.html]
+additional-js      = ["mermaid-init.js", "mermaid.min.js"]
+git-repository-url = "https://github.com/esp-rs/no_std-training"
+
+# Pages of the previous training, kept so that existing bookmarks still resolve.
+[output.html.redirect]
+"/01_intro.html"                       = "introduction.html"
+"/02_0_preparations.html"              = "prerequisites.html"
+"/02_1_hardware.html"                  = "prerequisites.html#hardware"
+"/02_2_software.html"                  = "prerequisites.html#rust"
+"/02_3_repository.html"                = "application/project-setup.html"
+"/02_4_hello_world.html"               = "application/project-setup.html#a-minimal-application"
+"/03_0_intro_workshop.html"            = "application/index.html"
+"/03_1_panic.html"                     = "application/reading-sensor-data.html#panic-handler"
+"/03_2_blinky.html"                    = "application/index.html"
+"/03_3_button.html"                    = "application/index.html"
+"/03_4_interrupt.html"                 = "application/index.html"
+"/03_5_dma_spi.html"                   = "application/index.html"
+"/03_6_http_client.html"               = "application/wifi-connectivity.html"
+"/03_7_defmt.html"                     = "application/wrapping-up.html#from-demo-to-product"
+"/04_0_intro_advanced_examples.html"   = "application/index.html"
+"/04_1_stack_overflow_protection.html" = "application/index.html"
+
+[preprocessor.shiftinclude]
+
+[preprocessor.mermaid]
+command = "mdbook-mermaid"
