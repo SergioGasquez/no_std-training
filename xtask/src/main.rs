@@ -21,6 +21,10 @@ struct Cli {
 }
 
 #[derive(Debug, Subcommand)]
+#[expect(
+    clippy::enum_variant_names,
+    reason = "variant names define the `*-server` subcommands used in the book"
+)]
 enum Command {
     /// Starts a local MQTT v5 server and prints all received messages.
     MqttServer {
@@ -305,11 +309,10 @@ fn read_http_request(stream: &mut TcpStream) -> Option<(Vec<u8>, usize)> {
                     header_end = find_header_end(&request);
                 }
 
-                if content_length.is_none() {
-                    if let Some(headers_end) = header_end {
-                        let headers = &request[..headers_end];
-                        content_length = parse_content_length(headers);
-                    }
+                if content_length.is_none()
+                    && let Some(headers_end) = header_end
+                {
+                    content_length = parse_content_length(&request[..headers_end]);
                 }
 
                 if let (Some(headers_end), Some(length)) = (header_end, content_length) {
