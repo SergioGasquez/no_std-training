@@ -5,14 +5,20 @@ on:
     branches:
       - main
     paths-ignore:
-      - "book/"
-      - "book/**"
-      - "**/README.md"
+      - "**/*.md"
+      - "training/**"
+      - "book.toml"
+      - "lychee.toml"
+      - "mermaid-init.js"
+      - "mermaid.min.js"
   pull_request:
     paths-ignore:
-      - "book/"
-      - "book/**"
-      - "**/README.md"
+      - "**/*.md"
+      - "training/**"
+      - "book.toml"
+      - "lychee.toml"
+      - "mermaid-init.js"
+      - "mermaid.min.js"
   schedule:
     - cron: "50 7 * * *"
 
@@ -41,14 +47,30 @@ jobs:
       - uses: dtolnay/rust-toolchain@v1
         with:
           target: riscv32imc-unknown-none-elf
-          toolchain: nightly
+          toolchain: stable
           components: rust-src, rustfmt, clippy
 
       - run: cargo fmt --all -- --check
         working-directory: ${{ matrix.project }}
 
-      - run: cargo build --release
+      - run: cargo build --release --locked
         working-directory: ${{ matrix.project }}
 
-      - run: cargo clippy -- -D warnings
+      - run: cargo clippy --locked -- -D warnings
         working-directory: ${{ matrix.project }}
+
+  xtask:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - run: cargo fmt --all -- --check
+
+      - run: cargo clippy --package xtask --all-targets --locked -- -D warnings
+
+      - run: cargo test --package xtask --locked
