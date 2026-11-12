@@ -12,36 +12,7 @@ Starting from an empty project, we built a data logger that:
 - Periodically checks a server for a new firmware version, installs it in a spare OTA slot, and reboots into it.
 - Shows its current state on the RGB LED.
 
-The final application in `project/part5/` is a set of Embassy tasks that run concurrently and communicate through a few shared primitives:
-
-```mermaid
-flowchart LR
-    subgraph Device["ESP32-C3"]
-        main["main"]
-        http["run_http_server"]
-        dhcp["run_dhcp"]
-        captive["run_captive_portal"]
-        ap_net["net_task (AP)"]
-        conn["connection"]
-        sta_net["sta_net_task (STA)"]
-        mqtt["mqtt_task"]
-        ota["http_client_task (OTA)"]
-        led["status_led_task"]
-    end
-
-    user["Phone or laptop"]
-    broker["MQTT broker"]
-    server["OTA server"]
-
-    user <--> dhcp & captive & http
-    dhcp & captive & http --- ap_net
-    http -- "WifiCredentials (Channel)" --> conn
-    main -- "FlashStorage (Mutex)" --> ota
-    main & ota -- "LedStatus (Signal)" --> led
-    mqtt & ota --- sta_net
-    mqtt --> broker
-    ota <--> server
-```
+The final application is available in `project/part5/`.
 
 ## What We Learned
 
