@@ -226,7 +226,6 @@ sensor payload={"temperature":24.31,"humidity":42.18}
 
 At this point the board can join a Wi-Fi network, obtain an IP address, and send measurements off-device. In the next chapter we will publish those readings to an MQTT broker.
 
-<!-- TODO: Use /latest/ when new docs are redeployed -->
 [esp-radio]: https://docs.espressif.com/projects/rust/esp-radio/0.18.0/esp32c3/esp_radio/index.html
 [esp-alloc]: https://docs.espressif.com/projects/rust/esp-alloc/0.10.0/esp_alloc/index.html
 [heap-allocator]: https://docs.espressif.com/projects/rust/esp-alloc/0.10.0/esp_alloc/macro.heap_allocator.html

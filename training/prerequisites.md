@@ -9,7 +9,7 @@ Some level of prior experience with Rust, and programming in general, is expecte
 If you are completely new to the language, we recommend you first read [The Rust Book]. You may also wish to first read [The Rust on ESP Book], though this is not required reading.
 
 [the rust book]: https://doc.rust-lang.org/book/
-[the rust on esp book]: https://esp-rs.github.io/book/
+[the rust on esp book]: https://docs.espressif.com/projects/rust/book/
 
 ### Toolchain
 

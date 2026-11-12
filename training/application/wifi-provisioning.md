@@ -317,7 +317,6 @@ This example shows the core of Wi-Fi provisioning, but it leaves out several thi
 At this point the device no longer needs credentials at compile time: the same firmware can join any network. In the next chapter we will look at updating that firmware in the field with [Over-the-Air Updates](./ota-updates.md).
 
 [idf-provisioning]: https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/provisioning/provisioning.html
-<!-- TODO: Use /latest/ when new docs are redeployed -->
 [wifi-new]: https://docs.espressif.com/projects/rust/esp-radio/0.18.0/esp32c3/esp_radio/wifi/fn.new.html
 [wifi-interfaces]: https://docs.espressif.com/projects/rust/esp-radio/0.18.0/esp32c3/esp_radio/wifi/struct.Interfaces.html
 [wifi-controller]: https://docs.espressif.com/projects/rust/esp-radio/0.18.0/esp32c3/esp_radio/wifi/struct.WifiController.html

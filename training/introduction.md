@@ -62,6 +62,6 @@ If you want to use our text or images in your work, you must:
 - Provide a link to the [CC-BY-SA v4.0] license.
 - Indicate if you have changed the material in any way, and make any changes to our material available under the same license.
 
-[MIT License]: https://opensource.org/licenses/MIT
-[Apache License v2.0]: http://www.apache.org/licenses/LICENSE-2.0
+[MIT License]: https://opensource.org/license/MIT
+[Apache License v2.0]: https://www.apache.org/licenses/LICENSE-2.0
 [CC-BY-SA v4.0]: https://creativecommons.org/licenses/by-sa/4.0/legalcode

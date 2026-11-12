@@ -435,7 +435,6 @@ With OTA updates in place, a device in the field can receive new firmware withou
 [idf-app-image]: https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/system/app_image_format.html
 [idf-secure-boot]: https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/security/secure-boot-v2.html
 [idf-app-rollback]: https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/system/ota.html#app-rollback
-<!-- TODO: Use /latest/ when new docs are redeployed -->
 [esp-storage]: https://docs.espressif.com/projects/rust/esp-storage/0.9.0/esp32c3/esp_storage/
 [flash-storage]: https://docs.espressif.com/projects/rust/esp-storage/0.9.0/esp32c3/esp_storage/struct.FlashStorage.html
 [esp-bootloader-esp-idf]: https://docs.espressif.com/projects/rust/esp-bootloader-esp-idf/0.5.0/esp32c3/esp_bootloader_esp_idf/

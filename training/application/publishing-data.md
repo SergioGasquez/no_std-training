@@ -199,4 +199,4 @@ Topic: measurement/temperature | Payload: 24.31
 At this point the board can maintain an MQTT connection and publish sensor measurements to a broker. In the next chapter we will replace the compile-time Wi-Fi credentials with a provisioning portal.
 
 [`rust-mqtt`]: https://docs.rs/rust-mqtt/0.5.1/rust_mqtt/
-[`heapless::String`]: https://docs.rs/heapless/0.9.3/heapless/struct.String.html
+[`heapless::String`]: https://docs.rs/heapless/0.9.3/heapless/string/type.String.html
