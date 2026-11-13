@@ -75,9 +75,16 @@ impl Handler for HttpHandler {
                 }
 
                 match serde_json_core::from_slice::<WifiCredentials>(&body[..len]) {
-                    Ok((credentials, _)) => {
+                    // WPA2 passwords have between 8 and 64 characters. The Wi-Fi driver does not
+                    // reject shorter ones, it only fails to connect.
+                    Ok((credentials, _)) if credentials.password.len() >= 8 => {
                         WIFI_CREDENTIALS.signal(credentials);
                         conn.initiate_response(200, Some("OK"), &[]).await?;
+                    }
+                    Ok(_) => {
+                        warn!("Rejected credentials: the password is shorter than 8 characters");
+                        conn.initiate_response(400, Some("Bad Request"), &[])
+                            .await?;
                     }
                     Err(e) => {
                         warn!("Invalid credentials request: {e:?}");

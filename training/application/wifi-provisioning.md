@@ -101,7 +101,7 @@ After the credentials arrive, the same task replaces the configuration with a [`
 {{#shiftinclude auto:../../project/part4/src/network.rs:station_mode}}
 ```
 
-[`set_config`][set-config] restarts Wi-Fi in the new mode, so the access point disappears and the provisioning page is no longer reachable. The Wi-Fi driver rejects credentials it cannot use, for example a WPA2 password shorter than eight characters. In that case, the task logs the error and starts the access point again, so the user can submit new credentials. Otherwise, the station connects and reconnects with the same loop used in the previous chapters.
+[`set_config`][set-config] restarts Wi-Fi in the new mode, so the access point disappears and the provisioning page is no longer reachable. The station then connects and reconnects with the same loop used in the previous chapters.
 
 > `esp-radio` also supports running both roles at once with [`Config::AccessPointStation`][wifi-config]. This would let the portal stay up while the device tries the new credentials, for example to report a wrong password back to the user. We keep the two phases separate to keep the example small.
 
@@ -231,6 +231,8 @@ The form submits the credentials as JSON to `POST /save`:
 
 The handler reads up to 256 bytes of the body, which can arrive in several TCP segments, and parses it with [`serde-json-core`][serde-json-core], a `no_std` JSON parser that does not allocate. If parsing succeeds, the handler signals the credentials and replies with `200 OK`. If the body is empty, too long, or not valid JSON, the handler replies with `400 Bad Request`.
 
+The handler also rejects passwords shorter than eight characters, the minimum for WPA2. The Wi-Fi driver does not reject them: it accepts the configuration and only fails to connect, at which point the access point is already gone. Rejecting them here keeps the portal running and lets the page report the error. The form checks the same limits with the `minlength` and `maxlength` attributes, so the browser reports them before submitting.
+
 ## HTML Templates
 
 The two pages live in `project/part4/assets/templates/`:
@@ -302,7 +304,7 @@ Topic: measurement/temperature | Payload: 24.31
 Topic: measurement/humidity | Payload: 42.18
 ```
 
-If the password is accepted by the driver but wrong for the network, the `connection` task keeps retrying every five seconds. Reset the board to start the provisioning portal again.
+If the password is wrong, the `connection` task keeps retrying every five seconds. Reset the board to start the provisioning portal again.
 
 ## Limitations
 

@@ -69,8 +69,8 @@
         </div>
         <h2>Configure WiFi</h2>
         <form id='wifi-form'>
-            <input type='text' id='ssid' placeholder='WiFi SSID' required>
-            <input type='password' id='password' placeholder='WiFi Password' required>
+            <input type='text' id='ssid' placeholder='WiFi SSID' maxlength='32' required>
+            <input type='password' id='password' placeholder='WiFi Password' minlength='8' maxlength='64' required>
             <button type='submit'>Save Configuration</button>
         </form>
         <script>

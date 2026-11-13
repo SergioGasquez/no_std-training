@@ -80,43 +80,39 @@ pub async fn net_task(mut runner: Runner<'static, Interface>) {
 
 #[embassy_executor::task]
 pub async fn connection(mut controller: WifiController<'static>) {
-    loop {
-        // ANCHOR: ap_mode
-        // Start in access point mode for provisioning
-        let ap_config = Config::AccessPoint(
-            AccessPointConfig::default().with_ssid("esp-radio".try_into().unwrap()),
-        );
-        controller
-            .set_config(&ap_config)
-            .expect("Failed to start the access point");
-        info!("Wi-Fi access point started");
-        // ANCHOR_END: ap_mode
+    // ANCHOR: ap_mode
+    // Start in access point mode for provisioning
+    let ap_config = Config::AccessPoint(
+        AccessPointConfig::default().with_ssid("esp-radio".try_into().unwrap()),
+    );
+    controller
+        .set_config(&ap_config)
+        .expect("Failed to start the access point");
+    info!("Wi-Fi access point started");
+    // ANCHOR_END: ap_mode
 
-        // ANCHOR: receive_credentials
-        let credentials = WIFI_CREDENTIALS.wait().await;
-        info!("Credentials received for SSID {}", credentials.ssid);
+    // ANCHOR: receive_credentials
+    let credentials = WIFI_CREDENTIALS.wait().await;
+    info!("Credentials received for SSID {}", credentials.ssid);
 
-        // Give the HTTP server time to send its response before the access point stops
-        Timer::after(Duration::from_secs(2)).await;
-        // ANCHOR_END: receive_credentials
+    // Give the HTTP server time to send its response before the access point stops
+    Timer::after(Duration::from_secs(2)).await;
+    // ANCHOR_END: receive_credentials
 
-        // ANCHOR: station_mode
-        // The conversions cannot fail: `WifiCredentials` bounds the lengths
-        let station_config = Config::Station(
-            StationConfig::default()
-                .with_ssid(credentials.ssid.as_str().try_into().unwrap())
-                .with_authentication(AuthenticationMethodConfig::Wpa2Personal(
-                    credentials.password.as_str().try_into().unwrap(),
-                )),
-        );
-        // This replaces the access point configuration and restarts Wi-Fi in station mode.
-        // The driver rejects invalid credentials, such as a password shorter than 8 characters.
-        match controller.set_config(&station_config) {
-            Ok(()) => break,
-            Err(e) => error!("Invalid Wi-Fi credentials, restarting provisioning: {e:?}"),
-        }
-        // ANCHOR_END: station_mode
-    }
+    // ANCHOR: station_mode
+    // The conversions cannot fail: `WifiCredentials` bounds the lengths
+    let station_config = Config::Station(
+        StationConfig::default()
+            .with_ssid(credentials.ssid.as_str().try_into().unwrap())
+            .with_authentication(AuthenticationMethodConfig::Wpa2Personal(
+                credentials.password.as_str().try_into().unwrap(),
+            )),
+    );
+    // This replaces the access point configuration and restarts Wi-Fi in station mode
+    controller
+        .set_config(&station_config)
+        .expect("Failed to configure station mode");
+    // ANCHOR_END: station_mode
 
     loop {
         match controller.connect_async().await {
