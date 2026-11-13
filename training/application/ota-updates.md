@@ -413,7 +413,7 @@ The OTA server keeps offering the same image, but the device now runs that versi
 INFO - HTTP Client: Firmware 0.2.0 is up to date
 ```
 
-Each of these checks closes the connection after the first bytes of the image, so the server prints `failed to write HTTP response body: Broken pipe` after `Serving firmware.bin`. This is expected.
+Each of these checks closes the connection after the first bytes of the image, so the server prints `failed to write HTTP response body` with `Broken pipe` or `Connection reset by peer` after `Serving firmware.bin`. This is expected.
 
 To return to the original firmware, flash it again over USB with `--erase-data-parts ota`, as in the first step.
 
